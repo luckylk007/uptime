@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 export const WAVE_CONFIG = {
   renderer: "webgl2",
@@ -44,41 +44,51 @@ function hexToRgb(hex: string): [number, number, number] {
 
 export function WaveBackground({ className = "" }: { className?: string }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isMounted) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
 
     let animationFrameId: number;
 
     const start2DFallback = () => {
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
+      try {
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
 
-      let t = 0;
-      const render2D = () => {
-        t += WAVE_CONFIG.speed * 0.05;
-        const w = (canvas.width = canvas.offsetWidth || 800);
-        const h = (canvas.height = canvas.offsetHeight || 600);
+        let t = 0;
+        const render2D = () => {
+          t += WAVE_CONFIG.speed * 0.05;
+          const w = (canvas.width = canvas.offsetWidth || 800);
+          const h = (canvas.height = canvas.offsetHeight || 600);
 
-        ctx.clearRect(0, 0, w, h);
-        for (let i = 0; i < WAVE_CONFIG.waveCount; i++) {
-          ctx.beginPath();
-          ctx.moveTo(0, h * 0.5);
-          for (let x = 0; x < w; x += 10) {
-            const y =
-              h * (0.5 + WAVE_CONFIG.verticalOffset) +
-              Math.sin(x * 0.005 * WAVE_CONFIG.frequency + t + i) * h * WAVE_CONFIG.amplitude;
-            ctx.lineTo(x, y);
+          ctx.clearRect(0, 0, w, h);
+          for (let i = 0; i < WAVE_CONFIG.waveCount; i++) {
+            ctx.beginPath();
+            ctx.moveTo(0, h * 0.5);
+            for (let x = 0; x < w; x += 10) {
+              const y =
+                h * (0.5 + WAVE_CONFIG.verticalOffset) +
+                Math.sin(x * 0.005 * WAVE_CONFIG.frequency + t + i) * h * WAVE_CONFIG.amplitude;
+              ctx.lineTo(x, y);
+            }
+            ctx.strokeStyle = WAVE_CONFIG.colors[i % WAVE_CONFIG.colors.length];
+            ctx.globalAlpha = WAVE_CONFIG.opacity;
+            ctx.lineWidth = 40;
+            ctx.stroke();
           }
-          ctx.strokeStyle = WAVE_CONFIG.colors[i % WAVE_CONFIG.colors.length];
-          ctx.globalAlpha = WAVE_CONFIG.opacity;
-          ctx.lineWidth = 40;
-          ctx.stroke();
-        }
-        animationFrameId = requestAnimationFrame(render2D);
-      };
-      render2D();
+          animationFrameId = requestAnimationFrame(render2D);
+        };
+        render2D();
+      } catch {
+        // ignore
+      }
     };
 
     try {
@@ -201,6 +211,7 @@ export function WaveBackground({ className = "" }: { className?: string }) {
       const rgb3 = hexToRgb(WAVE_CONFIG.colors[3]);
 
       const resize = () => {
+        if (typeof window === "undefined") return;
         const dpr = Math.min(window.devicePixelRatio || 1, 2);
         const displayWidth = canvas.clientWidth || 800;
         const displayHeight = canvas.clientHeight || 600;
@@ -257,7 +268,11 @@ export function WaveBackground({ className = "" }: { className?: string }) {
       start2DFallback();
       return () => cancelAnimationFrame(animationFrameId);
     }
-  }, []);
+  }, [isMounted]);
+
+  if (!isMounted) {
+    return <div className={`w-full h-full pointer-events-none ${className}`} />;
+  }
 
   return (
     <canvas

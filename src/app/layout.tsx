@@ -14,7 +14,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="scroll-smooth">
+    <html lang="en" className="scroll-smooth" suppressHydrationWarning>
       <body className="antialiased bg-[#f8fafc] text-slate-900 min-h-screen flex flex-col">
         <AuthProvider>
           <Navbar />
@@ -23,7 +23,7 @@ export default function RootLayout({
           </main>
           <footer className="bg-white border-t border-slate-200 py-8 text-center text-xs text-slate-500">
             <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <span className="font-semibold text-slate-700">UptimePro Monitoring System &copy; {new Date().getFullYear()}</span>
+              <span className="font-semibold text-slate-700">UptimePro Monitoring System &copy; 2026</span>
               <span className="text-slate-400">All Systems Operational • Powered by Edge Network</span>
             </div>
           </footer>
