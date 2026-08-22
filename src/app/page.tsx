@@ -15,6 +15,7 @@ export default function HomePage() {
   const { user } = useAuth();
   const [liveResults, setLiveResults] = useState<CheckResult[]>([]);
   const [monitors, setMonitors] = useState<Monitor[]>([]);
+  const [isMonitorsLoading, setIsMonitorsLoading] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [apiError, setApiError] = useState<string | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
@@ -31,6 +32,8 @@ export default function HomePage() {
       }
     } catch {
       // ignore
+    } finally {
+      setIsMonitorsLoading(false);
     }
   }, [user]);
 
@@ -57,7 +60,7 @@ export default function HomePage() {
       }
 
       setLiveResults(data.results);
-      fetchMonitors();
+      await fetchMonitors();
 
       const resultsEl = document.getElementById("results-anchor");
       if (resultsEl) {
@@ -172,6 +175,9 @@ export default function HomePage() {
           {activeView === "manage" && (
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
               <MonitorList
+                monitors={monitors}
+                isLoading={isMonitorsLoading}
+                onRefreshMonitors={fetchMonitors}
                 onOpenAddModal={() => setIsAddModalOpen(true)}
                 onOpenAuth={() => setIsAuthModalOpen(true)}
               />

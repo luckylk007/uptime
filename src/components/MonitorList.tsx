@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState } from "react";
 import type { Monitor, DbCheck, Incident } from "@/lib/types";
 import { useAuth } from "@/lib/auth-context";
 import { StatusBadge } from "./StatusBadge";
@@ -22,36 +22,24 @@ import {
 } from "lucide-react";
 
 interface MonitorListProps {
+  monitors: Monitor[];
+  isLoading?: boolean;
+  onRefreshMonitors: () => Promise<void> | void;
   onOpenAddModal: () => void;
   onOpenAuth?: () => void;
 }
 
-export function MonitorList({ onOpenAddModal, onOpenAuth }: MonitorListProps) {
+export function MonitorList({
+  monitors,
+  isLoading = false,
+  onRefreshMonitors,
+  onOpenAddModal,
+  onOpenAuth,
+}: MonitorListProps) {
   const { user } = useAuth();
-  const [monitors, setMonitors] = useState<Monitor[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [historyData, setHistoryData] = useState<Record<string, { checks: DbCheck[]; incidents: Incident[] }>>({});
   const [isRefreshing, setIsRefreshing] = useState<string | null>(null);
-
-  const fetchMonitors = useCallback(async () => {
-    try {
-      const url = user ? `/api/monitors?userId=${user.id}` : "/api/monitors";
-      const res = await fetch(url);
-      if (res.ok) {
-        const data = await res.json();
-        setMonitors(data.monitors || []);
-      }
-    } catch {
-      // ignore
-    } finally {
-      setIsLoading(false);
-    }
-  }, [user]);
-
-  useEffect(() => {
-    fetchMonitors();
-  }, [fetchMonitors]);
 
   const toggleExpand = async (id: string) => {
     if (expandedId === id) {
@@ -86,9 +74,7 @@ export function MonitorList({ onOpenAddModal, onOpenAuth }: MonitorListProps) {
       });
 
       if (res.ok) {
-        setMonitors((prev) =>
-          prev.map((m) => (m.id === id ? { ...m, enabled: !currentStatus } : m))
-        );
+        await onRefreshMonitors();
       }
     } catch {
       // ignore
@@ -105,7 +91,7 @@ export function MonitorList({ onOpenAddModal, onOpenAuth }: MonitorListProps) {
       });
 
       if (res.ok) {
-        setMonitors((prev) => prev.filter((m) => m.id !== id));
+        await onRefreshMonitors();
         if (expandedId === id) setExpandedId(null);
       }
     } catch {
@@ -125,7 +111,7 @@ export function MonitorList({ onOpenAddModal, onOpenAuth }: MonitorListProps) {
       });
 
       if (res.ok) {
-        await fetchMonitors();
+        await onRefreshMonitors();
         if (expandedId === monitor.id) {
           const histRes = await fetch(`/api/monitors/${monitor.id}/history?limit=30`);
           if (histRes.ok) {
@@ -144,7 +130,7 @@ export function MonitorList({ onOpenAddModal, onOpenAuth }: MonitorListProps) {
     }
   };
 
-  if (isLoading) {
+  if (isLoading && monitors.length === 0) {
     return (
       <div className="w-full py-16 flex flex-col items-center justify-center text-slate-400">
         <Loader2 className="w-8 h-8 animate-spin text-[#70BB3C] mb-3" />
