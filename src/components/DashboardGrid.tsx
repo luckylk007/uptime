@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import type { CheckResult, Monitor } from "@/lib/types";
 import { CheckCircle2, XCircle, Shield, Bell, Clock, Activity, AlertCircle, Globe } from "lucide-react";
 
@@ -10,6 +10,7 @@ interface DashboardGridProps {
 }
 
 export function DashboardGrid({ liveResults, monitors }: DashboardGridProps) {
+  const [hoveredBar, setHoveredBar] = useState<number | null>(null);
   const totalMonitors = monitors.length;
   const upMonitors = monitors.filter(
     (m) => m.enabled && (m.last_check?.status === "UP" || (!m.last_check && m.enabled))
@@ -39,6 +40,8 @@ export function DashboardGrid({ liveResults, monitors }: DashboardGridProps) {
   // Real Recent Checks
   const recentChecks = liveResults.slice(0, 5);
 
+  const TOTAL_VERTICAL_BARS = 75;
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       {/* 1. TOP ROW: 3 Primary Metrics Cards */}
@@ -62,7 +65,7 @@ export function DashboardGrid({ liveResults, monitors }: DashboardGridProps) {
           </div>
 
           <div className="pt-6">
-            {/* Real Status Indicator Bars */}
+            {/* Vertical Indicator Bars */}
             <div className="flex items-end gap-1 h-12">
               {Array.from({ length: 30 }).map((_, i) => (
                 <div
@@ -184,32 +187,29 @@ export function DashboardGrid({ liveResults, monitors }: DashboardGridProps) {
         </div>
       </div>
 
-      {/* 2. MIDDLE ROW: Full-Width Horizontal "System Reliability" Card */}
-      <div className="w-full bg-white rounded-2xl p-6 sm:p-7 border border-slate-200/80 shadow-xs">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6">
+      {/* 2. MIDDLE ROW: Full-Width Horizontal "System Reliability" Card with Vertical Lines */}
+      <div className="w-full bg-white rounded-2xl p-6 sm:p-7 border border-slate-200/80 shadow-xs space-y-6">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <div className="flex items-center gap-2">
-              <h3 className="font-bold text-slate-900 text-base">
-                System Reliability & Operational Heatmap
+            <div className="flex items-center gap-2.5">
+              <h3 className="font-bold text-slate-900 text-base sm:text-lg">
+                System Reliability
               </h3>
-              <span className="text-xs font-bold font-mono px-2.5 py-0.5 rounded-full bg-[#70BB3C]/10 text-[#70BB3C]">
+              <span className="text-xs font-bold font-mono px-3 py-1 rounded-full bg-[#70BB3C]/10 text-[#70BB3C] border border-[#70BB3C]/20">
                 {overallUptime}
               </span>
             </div>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Continuous multi-day health matrix and operational uptime consistency.
+            <p className="text-xs text-slate-400 mt-1">
+              Continuous multi-day operational telemetry across all active monitoring probes.
             </p>
           </div>
 
-          {/* Legend */}
-          <div className="flex items-center gap-4 text-xs text-slate-600 font-medium bg-slate-50 px-3.5 py-1.5 rounded-xl border border-slate-200/60 self-start sm:self-auto">
+          {/* Legend & Stats */}
+          <div className="flex items-center gap-4 text-xs font-medium text-slate-600 bg-slate-50 px-4 py-2 rounded-xl border border-slate-200/60 self-start sm:self-auto">
             <div className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-xs bg-[#70BB3C]" />
-              <span>Available (100%)</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-xs bg-amber-400" />
-              <span>Degraded</span>
+              <span>100% Operational</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-xs bg-rose-500" />
@@ -218,29 +218,41 @@ export function DashboardGrid({ liveResults, monitors }: DashboardGridProps) {
           </div>
         </div>
 
-        {/* Wide Full-Width Multi-Day Grid */}
-        <div className="space-y-2.5">
-          {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map((day, dIdx) => (
-            <div key={day} className="flex items-center gap-3 text-xs text-slate-400">
-              <span className="w-20 font-medium text-slate-600 text-[11px] truncate">
-                {day}
-              </span>
-              <div className="flex-1 grid grid-cols-24 sm:grid-cols-30 md:grid-cols-45 gap-1">
-                {Array.from({ length: 45 }).map((_, colIdx) => (
-                  <div
-                    key={colIdx}
-                    title={`${day} Interval ${colIdx + 1}: Operational 100%`}
-                    className="h-4 rounded-xs bg-[#70BB3C] hover:opacity-80 transition cursor-pointer"
-                  />
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
+        {/* Vertical Lines Bar Container (Matching Overall Uptime style) */}
+        <div className="relative pt-2">
+          <div className="flex items-end gap-1 sm:gap-1.5 h-16 sm:h-20 w-full overflow-hidden">
+            {Array.from({ length: TOTAL_VERTICAL_BARS }).map((_, idx) => {
+              const isHovered = hoveredBar === idx;
+              return (
+                <div
+                  key={idx}
+                  onMouseEnter={() => setHoveredBar(idx)}
+                  onMouseLeave={() => setHoveredBar(null)}
+                  className="flex-1 h-full bg-[#70BB3C] rounded-xs hover:bg-[#5ea031] transition-all duration-150 cursor-pointer relative group"
+                  style={{
+                    opacity: isHovered ? 1 : 0.9,
+                    transform: isHovered ? "scaleY(1.06)" : "scaleY(1)",
+                  }}
+                >
+                  {/* Tooltip on hover */}
+                  {isHovered && (
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-30 bg-[#181f2a] text-white text-[10px] font-mono px-2.5 py-1.5 rounded-lg whitespace-nowrap shadow-xl border border-slate-700 pointer-events-none">
+                      <div>Interval #{idx + 1}</div>
+                      <div className="text-[#70BB3C] font-bold">100.00% Operational</div>
+                      <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-[#181f2a]" />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
 
-        <div className="flex items-center justify-between text-[11px] text-slate-400 font-mono pt-4 mt-4 border-t border-slate-100">
-          <span>45 intervals historical</span>
-          <span>Current active window</span>
+          {/* Timeline Footer */}
+          <div className="flex items-center justify-between text-xs text-slate-400 font-mono mt-3 pt-3 border-t border-slate-100">
+            <span>75 intervals historical</span>
+            <span className="font-semibold text-slate-600">Continuous Monitoring Active</span>
+            <span className="text-[#70BB3C] font-bold">Current Live (100%)</span>
+          </div>
         </div>
       </div>
 
