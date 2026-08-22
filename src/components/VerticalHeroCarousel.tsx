@@ -98,16 +98,16 @@ const CAROUSEL_ITEMS: CarouselItem[] = [
 
 export function VerticalHeroCarousel() {
   const [activeIndex, setActiveIndex] = useState(0);
+  const [isMounted, setIsMounted] = useState(false);
 
-  // Auto rotate every 4.5 seconds
   useEffect(() => {
+    setIsMounted(true);
     const timer = setInterval(() => {
       setActiveIndex((prev) => (prev + 1) % CAROUSEL_ITEMS.length);
     }, 4500);
     return () => clearInterval(timer);
   }, []);
 
-  // Display 3 cards: previous/active/next window
   const visibleIndices = [
     activeIndex,
     (activeIndex + 1) % CAROUSEL_ITEMS.length,

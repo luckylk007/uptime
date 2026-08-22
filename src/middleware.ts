@@ -12,7 +12,6 @@ export function middleware(request: NextRequest) {
 
   // 1. Rate Limiting for API routes
   if (request.nextUrl.pathname.startsWith("/api/")) {
-    // Exempt internal cron if auth header matches
     const isCron = request.nextUrl.pathname.startsWith("/api/cron");
     if (!isCron) {
       const clientRate = rateLimitMap.get(ip) || { count: 0, resetTime: now + RATE_LIMIT_WINDOW_MS };
@@ -41,29 +40,17 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  // 2. Security Headers
+  // 2. Standard Safe Security Headers
   const response = NextResponse.next();
-
   response.headers.set("X-Frame-Options", "DENY");
   response.headers.set("X-Content-Type-Options", "nosniff");
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
-  response.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
-  response.headers.set(
-    "Content-Security-Policy",
-    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"
-  );
 
   return response;
 }
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
     "/((?!_next/static|_next/image|favicon.ico).*)",
   ],
 };
