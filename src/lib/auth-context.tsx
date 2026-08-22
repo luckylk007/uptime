@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { getSupabaseClient, isSupabaseConfigured } from "./supabase";
+import { getSupabaseClient } from "./supabase";
 import type { User, Session } from "@supabase/supabase-js";
 
 interface AuthContextType {
@@ -28,99 +28,124 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    const supabase = getSupabaseClient();
-    if (!supabase) {
-      // Check localStorage for offline demo user if any
-      const savedUser = localStorage.getItem("pulsecheck_demo_user");
-      if (savedUser) {
-        try {
-          setUser(JSON.parse(savedUser));
-        } catch {
-          // ignore
+    try {
+      const supabase = getSupabaseClient();
+      if (!supabase) {
+        if (typeof window !== "undefined") {
+          const savedUser = localStorage.getItem("pulsecheck_demo_user");
+          if (savedUser) {
+            try {
+              setUser(JSON.parse(savedUser));
+            } catch {
+              // ignore
+            }
+          }
         }
+        setLoading(false);
+        return;
       }
+
+      // 1. Get initial session
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
+      }).catch(() => {
+        setLoading(false);
+      });
+
+      // 2. Listen to auth changes
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
+      });
+
+      return () => {
+        subscription.unsubscribe();
+      };
+    } catch {
       setLoading(false);
-      return;
     }
-
-    // 1. Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
-    // 2. Listen to auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
   }, []);
 
   const signIn = async (email: string, pass: string) => {
-    const supabase = getSupabaseClient();
-    if (!supabase) {
-      // Demo login
-      const demoUser: any = {
-        id: "demo-user-123",
+    try {
+      const supabase = getSupabaseClient();
+      if (!supabase) {
+        const demoUser: any = {
+          id: "demo-user-123",
+          email,
+          created_at: new Date().toISOString(),
+        };
+        setUser(demoUser);
+        if (typeof window !== "undefined") {
+          localStorage.setItem("pulsecheck_demo_user", JSON.stringify(demoUser));
+        }
+        return {};
+      }
+
+      const { error, data } = await supabase.auth.signInWithPassword({
         email,
-        created_at: new Date().toISOString(),
-      };
-      setUser(demoUser);
-      localStorage.setItem("pulsecheck_demo_user", JSON.stringify(demoUser));
+        password: pass,
+      });
+
+      if (error) return { error: error.message };
+      setUser(data.user);
+      setSession(data.session);
       return {};
+    } catch (err: any) {
+      return { error: err?.message || "Failed to sign in" };
     }
-
-    const { error, data } = await supabase.auth.signInWithPassword({
-      email,
-      password: pass,
-    });
-
-    if (error) return { error: error.message };
-    setUser(data.user);
-    setSession(data.session);
-    return {};
   };
 
   const signUp = async (email: string, pass: string) => {
-    const supabase = getSupabaseClient();
-    if (!supabase) {
-      const demoUser: any = {
-        id: "demo-user-123",
+    try {
+      const supabase = getSupabaseClient();
+      if (!supabase) {
+        const demoUser: any = {
+          id: "demo-user-123",
+          email,
+          created_at: new Date().toISOString(),
+        };
+        setUser(demoUser);
+        if (typeof window !== "undefined") {
+          localStorage.setItem("pulsecheck_demo_user", JSON.stringify(demoUser));
+        }
+        return { user: demoUser };
+      }
+
+      const { error, data } = await supabase.auth.signUp({
         email,
-        created_at: new Date().toISOString(),
-      };
-      setUser(demoUser);
-      localStorage.setItem("pulsecheck_demo_user", JSON.stringify(demoUser));
-      return { user: demoUser };
-    }
+        password: pass,
+      });
 
-    const { error, data } = await supabase.auth.signUp({
-      email,
-      password: pass,
-    });
-
-    if (error) return { error: error.message };
-    if (data.user) {
-      setUser(data.user);
-      setSession(data.session);
+      if (error) return { error: error.message };
+      if (data.user) {
+        setUser(data.user);
+        setSession(data.session);
+      }
+      return { user: data.user };
+    } catch (err: any) {
+      return { error: err?.message || "Failed to sign up" };
     }
-    return { user: data.user };
   };
 
   const signOut = async () => {
-    const supabase = getSupabaseClient();
-    if (supabase) {
-      await supabase.auth.signOut();
+    try {
+      const supabase = getSupabaseClient();
+      if (supabase) {
+        await supabase.auth.signOut();
+      }
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("pulsecheck_demo_user");
+      }
+      setUser(null);
+      setSession(null);
+    } catch {
+      setUser(null);
+      setSession(null);
     }
-    localStorage.removeItem("pulsecheck_demo_user");
-    setUser(null);
-    setSession(null);
   };
 
   return (

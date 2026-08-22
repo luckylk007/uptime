@@ -1,8 +1,12 @@
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+const rawUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+const rawAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+const rawServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+
+const supabaseUrl = rawUrl.trim().replace(/^['"]|['"]$/g, "");
+const supabaseAnonKey = rawAnonKey.trim().replace(/^['"]|['"]$/g, "");
+const supabaseServiceKey = rawServiceKey.trim().replace(/^['"]|['"]$/g, "");
 
 export const isSupabaseConfigured = Boolean(
   supabaseUrl && (supabaseAnonKey || supabaseServiceKey)
@@ -12,9 +16,13 @@ let supabaseClient: SupabaseClient | null = null;
 let supabaseAdminClient: SupabaseClient | null = null;
 
 export function getSupabaseClient(): SupabaseClient | null {
-  if (!isSupabaseConfigured) return null;
+  if (!isSupabaseConfigured || !supabaseUrl || !supabaseAnonKey) return null;
   if (!supabaseClient) {
-    supabaseClient = createClient(supabaseUrl, supabaseAnonKey || supabaseServiceKey);
+    try {
+      supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
+    } catch {
+      return null;
+    }
   }
   return supabaseClient;
 }
@@ -22,7 +30,11 @@ export function getSupabaseClient(): SupabaseClient | null {
 export function getSupabaseAdminClient(): SupabaseClient | null {
   if (!supabaseUrl || !supabaseServiceKey) return null;
   if (!supabaseAdminClient) {
-    supabaseAdminClient = createClient(supabaseUrl, supabaseServiceKey);
+    try {
+      supabaseAdminClient = createClient(supabaseUrl, supabaseServiceKey);
+    } catch {
+      return null;
+    }
   }
   return supabaseAdminClient;
 }
