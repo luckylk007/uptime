@@ -72,108 +72,122 @@ export default function HomePage() {
 
   return (
     <div className="w-full">
-      {/* 1. Hero Section with WebGL Wave Canvas */}
+      {/* 1. Hero Section with WebGL Wave Canvas (Slowed down) */}
       <HeroSection onCheck={handleCheckUrls} isLoading={isLoading} />
 
       <div id="results-anchor" />
 
-      {/* 2. Live Check Results Section with Multi-Country Grid */}
-      {liveResults.length > 0 && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6 mb-10 relative z-20 space-y-6">
-          <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xl">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#70BB3C] animate-ping" />
-                Live Check Results ({liveResults.length})
-              </h3>
+      {/* 2. Second Section with Assets Background */}
+      <section
+        className="w-full relative py-8 bg-no-repeat bg-cover bg-center"
+        style={{
+          backgroundImage: "url('/assets/itrs-wave-home.svg')",
+          backgroundColor: "#f8fafc",
+        }}
+      >
+        {/* Soft gradient overlay so cards remain crisp */}
+        <div className="absolute inset-0 bg-white/70 backdrop-blur-[2px] pointer-events-none" />
+
+        <div className="relative z-10">
+          {/* Live Check Results Section with Multi-Country Grid */}
+          {liveResults.length > 0 && (
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-12 mb-10 space-y-6">
+              <div className="bg-white/95 backdrop-blur-md rounded-2xl p-6 border border-slate-200 shadow-xl">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#70BB3C] animate-ping" />
+                    Live Check Results ({liveResults.length})
+                  </h3>
+                  <button
+                    onClick={() => setLiveResults([])}
+                    className="text-xs text-slate-500 hover:text-slate-700 font-medium"
+                  >
+                    Clear Results
+                  </button>
+                </div>
+                <CheckResults results={liveResults} />
+              </div>
+
+              {/* Multi-Country Probe Grid for the latest checked URL */}
+              <div className="bg-white/95 backdrop-blur-md rounded-2xl p-6 border border-slate-200 shadow-xl">
+                <MultiCountryGrid
+                  regions={liveResults[0]?.regions}
+                  url={liveResults[0]?.url}
+                />
+              </div>
+            </div>
+          )}
+
+          {apiError && (
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-4">
+              <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-sm font-medium">
+                <strong>Error:</strong> {apiError}
+              </div>
+            </div>
+          )}
+
+          {/* View Switcher Navigation */}
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 flex items-center justify-between">
+            <div className="flex items-center gap-2 bg-slate-200/80 backdrop-blur-sm p-1 rounded-xl shadow-2xs">
               <button
-                onClick={() => setLiveResults([])}
-                className="text-xs text-slate-500 hover:text-slate-700 font-medium"
+                onClick={() => setActiveView("dashboard")}
+                className={`px-4 py-1.5 rounded-lg text-xs font-bold transition ${
+                  activeView === "dashboard"
+                    ? "bg-white text-slate-900 shadow-xs"
+                    : "text-slate-600 hover:text-slate-900"
+                }`}
               >
-                Clear Results
+                Dashboard Overview
+              </button>
+              <button
+                onClick={() => setActiveView("regions")}
+                className={`px-4 py-1.5 rounded-lg text-xs font-bold transition ${
+                  activeView === "regions"
+                    ? "bg-white text-slate-900 shadow-xs"
+                    : "text-slate-600 hover:text-slate-900"
+                }`}
+              >
+                Global Regions (12 Cities)
+              </button>
+              <button
+                onClick={() => setActiveView("manage")}
+                className={`px-4 py-1.5 rounded-lg text-xs font-bold transition ${
+                  activeView === "manage"
+                    ? "bg-white text-slate-900 shadow-xs"
+                    : "text-slate-600 hover:text-slate-900"
+                }`}
+              >
+                5-Min Monitors ({monitors.length}/5)
               </button>
             </div>
-            <CheckResults results={liveResults} />
           </div>
 
-          {/* Multi-Country Probe Grid for the latest checked URL */}
-          <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xl">
-            <MultiCountryGrid
-              regions={liveResults[0]?.regions}
-              url={liveResults[0]?.url}
-            />
-          </div>
-        </div>
-      )}
+          {/* Tab Views */}
+          {activeView === "dashboard" && (
+            <DashboardGrid liveResults={liveResults} monitors={monitors} />
+          )}
 
-      {apiError && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-4">
-          <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-sm font-medium">
-            <strong>Error:</strong> {apiError}
-          </div>
-        </div>
-      )}
+          {activeView === "regions" && (
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+              <div className="bg-white/95 backdrop-blur-md rounded-2xl p-6 border border-slate-200 shadow-sm">
+                <MultiCountryGrid
+                  regions={liveResults[0]?.regions}
+                  url={liveResults[0]?.url || "https://example.com"}
+                />
+              </div>
+            </div>
+          )}
 
-      {/* 3. View Switcher Navigation */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 flex items-center justify-between">
-        <div className="flex items-center gap-2 bg-slate-200/70 p-1 rounded-xl">
-          <button
-            onClick={() => setActiveView("dashboard")}
-            className={`px-4 py-1.5 rounded-lg text-xs font-bold transition ${
-              activeView === "dashboard"
-                ? "bg-white text-slate-900 shadow-xs"
-                : "text-slate-600 hover:text-slate-900"
-            }`}
-          >
-            Dashboard Overview
-          </button>
-          <button
-            onClick={() => setActiveView("regions")}
-            className={`px-4 py-1.5 rounded-lg text-xs font-bold transition ${
-              activeView === "regions"
-                ? "bg-white text-slate-900 shadow-xs"
-                : "text-slate-600 hover:text-slate-900"
-            }`}
-          >
-            Global Regions (12 Cities)
-          </button>
-          <button
-            onClick={() => setActiveView("manage")}
-            className={`px-4 py-1.5 rounded-lg text-xs font-bold transition ${
-              activeView === "manage"
-                ? "bg-white text-slate-900 shadow-xs"
-                : "text-slate-600 hover:text-slate-900"
-            }`}
-          >
-            5-Min Monitors ({monitors.length}/5)
-          </button>
+          {activeView === "manage" && (
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+              <MonitorList
+                onOpenAddModal={() => setIsAddModalOpen(true)}
+                onOpenAuth={() => setIsAuthModalOpen(true)}
+              />
+            </div>
+          )}
         </div>
-      </div>
-
-      {/* 4. Tab Views */}
-      {activeView === "dashboard" && (
-        <DashboardGrid liveResults={liveResults} monitors={monitors} />
-      )}
-
-      {activeView === "regions" && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
-            <MultiCountryGrid
-              regions={liveResults[0]?.regions}
-              url={liveResults[0]?.url || "https://example.com"}
-            />
-          </div>
-        </div>
-      )}
-
-      {activeView === "manage" && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <MonitorList
-            onOpenAddModal={() => setIsAddModalOpen(true)}
-            onOpenAuth={() => setIsAuthModalOpen(true)}
-          />
-        </div>
-      )}
+      </section>
 
       {/* Add Monitor Modal */}
       <AddMonitorModal

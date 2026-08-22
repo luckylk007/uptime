@@ -8,7 +8,7 @@ export const WAVE_CONFIG = {
   colors: ["#07070f", "#4361ee", "#48bfe3", "#00ff17"],
   colorOpacities: [1, 1, 1, 1],
   waveCount: 3,
-  speed: 0.16,
+  speed: 0.04, // Slowed down for smooth, elegant ambient motion
   amplitude: 0.2,
   frequency: 0.9,
   opacity: 0.15,
