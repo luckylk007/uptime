@@ -12,19 +12,22 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
-        source: "/:path*",
+        // Static assets (CSS, JS chunks, fonts, images) must be cached with immutable for instant rendering
+        source: "/_next/static/:path*",
         headers: [
           {
             key: "Cache-Control",
-            value: "no-cache, no-store, max-age=0, must-revalidate",
+            value: "public, max-age=31536000, immutable",
           },
+        ],
+      },
+      {
+        // HTML pages must revalidate so updates reflect immediately
+        source: "/((?!_next/static|_next/image|favicon.ico).*)",
+        headers: [
           {
-            key: "Pragma",
-            value: "no-cache",
-          },
-          {
-            key: "Expires",
-            value: "0",
+            key: "Cache-Control",
+            value: "public, max-age=0, must-revalidate",
           },
         ],
       },
