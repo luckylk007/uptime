@@ -48,10 +48,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div
-      className="min-h-screen bg-[#070e1e] flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden bg-no-repeat bg-cover bg-center"
-      style={{ backgroundImage: "url('/assets/itrs-wave-home.svg')" }}
-    >
+    <div className="min-h-screen bg-[#070e1e] flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center relative z-10 space-y-3">
         <Link href="/" className="inline-flex items-center gap-2.5">
           <div className="w-10 h-10 rounded-xl bg-[#70BB3C]/10 border border-[#70BB3C]/30 flex items-center justify-center text-[#70BB3C]">

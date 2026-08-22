@@ -72,27 +72,18 @@ export default function HomePage() {
 
   return (
     <div className="w-full">
-      {/* 1. Hero Section with WebGL Wave Canvas (Slowed down) */}
+      {/* 1. Hero Section with WebGL Wave Canvas */}
       <HeroSection onCheck={handleCheckUrls} isLoading={isLoading} />
 
       <div id="results-anchor" />
 
-      {/* 2. Second Section with Assets Background */}
-      <section
-        className="w-full relative py-8 bg-no-repeat bg-cover bg-center"
-        style={{
-          backgroundImage: "url('/assets/itrs-wave-home.svg')",
-          backgroundColor: "#f8fafc",
-        }}
-      >
-        {/* Soft gradient overlay so cards remain crisp */}
-        <div className="absolute inset-0 bg-white/70 backdrop-blur-[2px] pointer-events-none" />
-
-        <div className="relative z-10">
+      {/* 2. Second Section - Clean Solid Background */}
+      <section className="w-full relative py-8 bg-[#f8fafc]">
+        <div>
           {/* Live Check Results Section with Multi-Country Grid */}
           {liveResults.length > 0 && (
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-12 mb-10 space-y-6">
-              <div className="bg-white/95 backdrop-blur-md rounded-2xl p-6 border border-slate-200 shadow-xl">
+              <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xl">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-[#70BB3C] animate-ping" />
@@ -109,7 +100,7 @@ export default function HomePage() {
               </div>
 
               {/* Multi-Country Probe Grid for the latest checked URL */}
-              <div className="bg-white/95 backdrop-blur-md rounded-2xl p-6 border border-slate-200 shadow-xl">
+              <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xl">
                 <MultiCountryGrid
                   regions={liveResults[0]?.regions}
                   url={liveResults[0]?.url}
@@ -128,7 +119,7 @@ export default function HomePage() {
 
           {/* View Switcher Navigation */}
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 flex items-center justify-between">
-            <div className="flex items-center gap-2 bg-slate-200/80 backdrop-blur-sm p-1 rounded-xl shadow-2xs">
+            <div className="flex items-center gap-2 bg-slate-200/80 p-1 rounded-xl shadow-2xs">
               <button
                 onClick={() => setActiveView("dashboard")}
                 className={`px-4 py-1.5 rounded-lg text-xs font-bold transition ${
@@ -169,7 +160,7 @@ export default function HomePage() {
 
           {activeView === "regions" && (
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-              <div className="bg-white/95 backdrop-blur-md rounded-2xl p-6 border border-slate-200 shadow-sm">
+              <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
                 <MultiCountryGrid
                   regions={liveResults[0]?.regions}
                   url={liveResults[0]?.url || "https://example.com"}

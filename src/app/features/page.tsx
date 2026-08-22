@@ -8,8 +8,6 @@ import {
   Zap,
   Activity,
   Bell,
-  Lock,
-  BarChart3,
   Server,
   ArrowRight,
   CheckCircle2,
@@ -97,11 +95,8 @@ export default function FeaturesPage() {
         </div>
       </section>
 
-      {/* 2. Features Grid with Assets Background */}
-      <section
-        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 relative bg-no-repeat bg-cover bg-center"
-        style={{ backgroundImage: "url('/assets/itrs-wave-home.svg')" }}
-      >
+      {/* 2. Features Grid - Clean Solid Background */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="text-center mb-12">
           <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
             Powerful Monitoring Capabilities
@@ -117,7 +112,7 @@ export default function FeaturesPage() {
             return (
               <div
                 key={idx}
-                className="bg-white/95 backdrop-blur-sm rounded-2xl p-7 border border-slate-200 shadow-sm hover:shadow-md hover:border-[#70BB3C]/50 transition-all duration-200 flex flex-col justify-between"
+                className="bg-white rounded-2xl p-7 border border-slate-200 shadow-sm hover:shadow-md hover:border-[#70BB3C]/50 transition-all duration-200 flex flex-col justify-between"
               >
                 <div>
                   <div className="flex items-center justify-between mb-4">
