@@ -99,18 +99,25 @@ const CAROUSEL_ITEMS: CarouselItem[] = [
 export function VerticalHeroCarousel() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isMounted, setIsMounted] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
+  }, []);
+
+  // Premium Slow Shuffle (Rotates every 6 seconds, pauses on hover)
+  useEffect(() => {
+    if (!isMounted || isPaused) return;
+
     const timer = setInterval(() => {
       setActiveIndex((prev) => (prev + 1) % CAROUSEL_ITEMS.length);
-    }, 4000);
+    }, 6000);
+
     return () => clearInterval(timer);
-  }, []);
+  }, [isMounted, isPaused]);
 
   const total = CAROUSEL_ITEMS.length;
 
-  // 3-card window where the CENTER card (index 1) is highlighted
   const topIdx = (activeIndex - 1 + total) % total;
   const centerIdx = activeIndex;
   const bottomIdx = (activeIndex + 1) % total;
@@ -122,45 +129,64 @@ export function VerticalHeroCarousel() {
   ];
 
   return (
-    <div className="w-full max-w-lg mx-auto select-none relative">
-      {/* Cards Container with smooth cross-fade animation */}
-      <div className="space-y-3.5 relative">
+    <div
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+      className="w-full max-w-lg mx-auto select-none relative"
+    >
+      {/* 3D Perspective Card Shuffle Stack */}
+      <div className="space-y-4 relative py-2">
         {cards.map(({ item, position, originalIdx }) => {
           const isCenter = position === "center";
+          const isTop = position === "top";
+          const isBottom = position === "bottom";
           const Icon = item.icon;
 
           return (
             <div
               key={`${position}-${originalIdx}`}
               onClick={() => setActiveIndex(originalIdx)}
-              className={`p-4 sm:p-5 rounded-2xl transition-all duration-700 ease-in-out cursor-pointer relative overflow-hidden flex items-start gap-4 ${
+              style={{
+                transitionTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
+              }}
+              className={`p-5 sm:p-6 rounded-2xl transition-all duration-1000 cursor-pointer relative overflow-hidden flex items-start gap-4 ${
                 isCenter
-                  ? "bg-gradient-to-r from-[#0d1a31] via-[#11223e] to-[#0e1c34] border-2 border-[#70BB3C] shadow-2xl shadow-[#70BB3C]/20 scale-100 opacity-100 z-20"
-                  : "bg-[#091220]/60 border border-slate-800/80 scale-[0.95] opacity-40 hover:opacity-70 hover:scale-[0.97] blur-[0.3px] z-10"
+                  ? "bg-gradient-to-r from-[#0e1c33] via-[#122340] to-[#0e1c33] border-2 border-[#70BB3C] shadow-[0_20px_50px_rgba(112,187,60,0.16)] scale-100 opacity-100 translate-y-0 z-30 ring-1 ring-[#70BB3C]/30"
+                  : isTop
+                  ? "bg-[#091220]/70 border border-slate-800/80 scale-[0.93] opacity-35 hover:opacity-60 blur-[0.6px] translate-y-1.5 z-10"
+                  : "bg-[#091220]/70 border border-slate-800/80 scale-[0.93] opacity-35 hover:opacity-60 blur-[0.6px] -translate-y-1.5 z-10"
               }`}
             >
-              {/* Icon Box */}
+              {/* Glowing Icon Box */}
               <div
-                className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center shrink-0 border transition-all duration-700 ${
+                style={{
+                  transitionTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
+                }}
+                className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center shrink-0 border transition-all duration-1000 ${
                   isCenter
-                    ? "bg-[#70BB3C]/15 border-[#70BB3C]/50 text-[#70BB3C] shadow-inner shadow-[#70BB3C]/30"
-                    : "bg-slate-900/80 border-slate-800 text-slate-500"
+                    ? "bg-[#70BB3C]/15 border-[#70BB3C]/50 text-[#70BB3C] shadow-inner shadow-[#70BB3C]/30 scale-105"
+                    : "bg-slate-900/80 border-slate-800 text-slate-500 scale-95"
                 }`}
               >
                 <Icon className="w-6 h-6 sm:w-7 sm:h-7 stroke-[2.2]" />
               </div>
 
               {/* Text Content */}
-              <div className="flex-1 min-w-0 pr-8 transition-all duration-700">
+              <div
+                style={{
+                  transitionTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
+                }}
+                className="flex-1 min-w-0 pr-8 transition-all duration-1000"
+              >
                 <div
-                  className={`text-[10px] font-mono font-bold tracking-wider uppercase mb-1 transition-colors duration-700 ${
+                  className={`text-[10px] font-mono font-bold tracking-wider uppercase mb-1 transition-colors duration-1000 ${
                     isCenter ? "text-[#70BB3C]" : "text-slate-500"
                   }`}
                 >
                   {item.tag}
                 </div>
 
-                <h3 className="text-base sm:text-lg font-black tracking-tight leading-tight transition-all duration-700">
+                <h3 className="text-base sm:text-lg font-black tracking-tight leading-tight transition-all duration-1000">
                   <span className="text-white">{item.title1} </span>
                   <span className={isCenter ? "text-[#70BB3C]" : "text-slate-400"}>
                     {item.title2}
@@ -168,7 +194,7 @@ export function VerticalHeroCarousel() {
                 </h3>
 
                 <p
-                  className={`text-xs mt-1.5 leading-relaxed line-clamp-2 transition-colors duration-700 ${
+                  className={`text-xs mt-1.5 leading-relaxed line-clamp-2 transition-colors duration-1000 ${
                     isCenter ? "text-slate-300" : "text-slate-500"
                   }`}
                 >
@@ -179,10 +205,13 @@ export function VerticalHeroCarousel() {
               {/* Right Action Arrow Indicator */}
               <div className="absolute right-4 top-1/2 -translate-y-1/2">
                 <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center border transition-all duration-700 ${
+                  style={{
+                    transitionTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
+                  }}
+                  className={`w-8 h-8 rounded-full flex items-center justify-center border transition-all duration-1000 ${
                     isCenter
                       ? "bg-[#70BB3C] text-slate-950 shadow-md shadow-[#70BB3C]/30 scale-105"
-                      : "bg-slate-900/80 border-slate-800 text-slate-600"
+                      : "bg-slate-900/80 border-slate-800 text-slate-600 scale-90"
                   }`}
                 >
                   <ArrowRight className="w-4 h-4 stroke-[2.5]" />
