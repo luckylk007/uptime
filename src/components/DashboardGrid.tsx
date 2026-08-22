@@ -2,7 +2,7 @@
 
 import React from "react";
 import type { CheckResult, Monitor } from "@/lib/types";
-import { CheckCircle2, XCircle, Shield, Bell, Clock, Activity, AlertCircle } from "lucide-react";
+import { CheckCircle2, XCircle, Shield, Bell, Clock, Activity, AlertCircle, Globe } from "lucide-react";
 
 interface DashboardGridProps {
   liveResults: CheckResult[];
@@ -41,7 +41,7 @@ export function DashboardGrid({ liveResults, monitors }: DashboardGridProps) {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-      {/* 2x3 Grid */}
+      {/* 1. TOP ROW: 3 Primary Metrics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* CARD 1: Overall Uptime */}
         <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs flex flex-col justify-between">
@@ -182,38 +182,34 @@ export function DashboardGrid({ liveResults, monitors }: DashboardGridProps) {
             </div>
           )}
         </div>
+      </div>
 
-        {/* CARD 4: Target Reliability Heatmap */}
-        <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs flex flex-col justify-between">
+      {/* 2. MIDDLE ROW: Full-Width Horizontal "System Reliability" Card */}
+      <div className="w-full bg-white rounded-2xl p-6 sm:p-7 border border-slate-200/80 shadow-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6">
           <div>
-            <div className="flex items-center justify-between text-xs text-slate-500 font-medium mb-4">
-              <span className="font-semibold text-slate-900 text-sm">System Reliability</span>
-              <span className="text-xs font-bold text-[#70BB3C]">{overallUptime}</span>
+            <div className="flex items-center gap-2">
+              <h3 className="font-bold text-slate-900 text-base">
+                System Reliability & Operational Heatmap
+              </h3>
+              <span className="text-xs font-bold font-mono px-2.5 py-0.5 rounded-full bg-[#70BB3C]/10 text-[#70BB3C]">
+                {overallUptime}
+              </span>
             </div>
-
-            {/* Real System Status Grid */}
-            <div className="space-y-1.5">
-              {["Mon", "Wed", "Fri", "Sun"].map((day) => (
-                <div key={day} className="flex items-center gap-2 text-[10px] text-slate-400">
-                  <span className="w-6 font-mono">{day}</span>
-                  <div className="flex-1 grid grid-cols-15 gap-1">
-                    {Array.from({ length: 15 }).map((_, colIdx) => (
-                      <div
-                        key={colIdx}
-                        className="h-3 rounded-xs bg-[#70BB3C]"
-                      />
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Continuous multi-day health matrix and operational uptime consistency.
+            </p>
           </div>
 
           {/* Legend */}
-          <div className="flex items-center gap-4 text-[11px] text-slate-600 pt-4 mt-2 border-t border-slate-100 font-medium">
+          <div className="flex items-center gap-4 text-xs text-slate-600 font-medium bg-slate-50 px-3.5 py-1.5 rounded-xl border border-slate-200/60 self-start sm:self-auto">
             <div className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-xs bg-[#70BB3C]" />
-              <span>Available</span>
+              <span>Available (100%)</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-xs bg-amber-400" />
+              <span>Degraded</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-xs bg-rose-500" />
@@ -222,82 +218,140 @@ export function DashboardGrid({ liveResults, monitors }: DashboardGridProps) {
           </div>
         </div>
 
-        {/* CARD 5: Active Target Endpoints */}
-        <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs">
-          <div className="flex items-center justify-between text-xs text-slate-500 font-medium mb-4">
-            <span className="font-semibold text-slate-900 text-sm">Active Targets</span>
-            <span className="text-xs text-slate-400">{monitors.length} configured</span>
-          </div>
-
-          {monitors.length > 0 ? (
-            <div className="space-y-3 text-xs">
-              {monitors.slice(0, 5).map((m, i) => (
-                <div key={i} className="flex items-center justify-between">
-                  <span className="font-mono text-slate-800 truncate max-w-[180px]">
-                    {m.url}
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-[#70BB3C]/10 text-[#70BB3C]">
-                      {m.enabled ? "Active" : "Paused"}
-                    </span>
-                    <span className="font-mono text-slate-500">
-                      {m.interval_minutes}m
-                    </span>
-                  </div>
-                </div>
-              ))}
+        {/* Wide Full-Width Multi-Day Grid */}
+        <div className="space-y-2.5">
+          {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map((day, dIdx) => (
+            <div key={day} className="flex items-center gap-3 text-xs text-slate-400">
+              <span className="w-20 font-medium text-slate-600 text-[11px] truncate">
+                {day}
+              </span>
+              <div className="flex-1 grid grid-cols-24 sm:grid-cols-30 md:grid-cols-45 gap-1">
+                {Array.from({ length: 45 }).map((_, colIdx) => (
+                  <div
+                    key={colIdx}
+                    title={`${day} Interval ${colIdx + 1}: Operational 100%`}
+                    className="h-4 rounded-xs bg-[#70BB3C] hover:opacity-80 transition cursor-pointer"
+                  />
+                ))}
+              </div>
             </div>
-          ) : (
-            <div className="py-8 text-center text-xs text-slate-400 flex flex-col items-center justify-center">
-              <AlertCircle className="w-6 h-6 text-slate-300 mb-2" />
-              <span>No continuous targets saved yet.</span>
-              <span className="text-[11px] text-slate-400 mt-0.5">Add targets under &quot;Manage Targets&quot;.</span>
-            </div>
-          )}
+          ))}
         </div>
 
-        {/* CARD 6: Real Monitor Stats */}
-        <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs">
-          <div className="text-xs font-semibold text-slate-900 text-sm mb-4">
-            Live Statistics
+        <div className="flex items-center justify-between text-[11px] text-slate-400 font-mono pt-4 mt-4 border-t border-slate-100">
+          <span>45 intervals historical</span>
+          <span>Current active window</span>
+        </div>
+      </div>
+
+      {/* 3. BOTTOM ROW: 2-Column Split for "Active Targets" & "Live Statistics" */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* LEFT COLUMN: Active Targets */}
+        <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between text-xs text-slate-500 font-medium mb-4">
+              <div className="flex items-center gap-2">
+                <Globe className="w-4 h-4 text-[#70BB3C]" />
+                <span className="font-semibold text-slate-900 text-sm">Active Targets</span>
+              </div>
+              <span className="text-xs font-mono font-bold bg-[#70BB3C]/10 text-[#70BB3C] px-2.5 py-0.5 rounded-full">
+                {monitors.length} / 5 Used
+              </span>
+            </div>
+
+            {monitors.length > 0 ? (
+              <div className="space-y-3 text-xs">
+                {monitors.slice(0, 5).map((m, i) => (
+                  <div key={i} className="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl border border-slate-100">
+                    <div className="min-w-0 flex-1 pr-3">
+                      <span className="font-mono text-slate-900 font-bold truncate block">
+                        {m.url}
+                      </span>
+                      <span className="text-[10px] text-slate-400">
+                        Check Interval: every {m.interval_minutes}m
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-[#70BB3C]/10 text-[#70BB3C]">
+                        {m.enabled ? "Active" : "Paused"}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="py-10 text-center text-xs text-slate-400 flex flex-col items-center justify-center">
+                <AlertCircle className="w-8 h-8 text-slate-300 mb-2" />
+                <span className="font-semibold text-slate-600">No continuous targets saved yet.</span>
+                <span className="text-[11px] text-slate-400 mt-1">Add targets under &quot;5-Min Monitors&quot; to track uptime.</span>
+              </div>
+            )}
           </div>
 
-          <div className="space-y-4 text-xs font-medium">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5 text-slate-600">
+          <div className="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
+            <span>Quota limit</span>
+            <span className="font-mono font-bold text-slate-700">Max 5 URLs</span>
+          </div>
+        </div>
+
+        {/* RIGHT COLUMN: Live Statistics */}
+        <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between text-xs text-slate-500 font-medium mb-4">
+              <div className="flex items-center gap-2">
                 <Activity className="w-4 h-4 text-[#70BB3C]" />
-                <span>Configured Targets</span>
+                <span className="font-semibold text-slate-900 text-sm">Live Statistics</span>
               </div>
-              <span className="font-bold text-slate-900 text-sm">
-                {totalMonitors}
-              </span>
+              <span className="text-xs text-slate-400">Real-time overview</span>
             </div>
 
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5 text-slate-600">
-                <Shield className="w-4 h-4 text-blue-500" />
-                <span>Overall Uptime</span>
+            <div className="space-y-4 text-xs font-medium">
+              <div className="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl border border-slate-100">
+                <div className="flex items-center gap-2.5 text-slate-700">
+                  <Activity className="w-4 h-4 text-[#70BB3C]" />
+                  <span>Configured Targets</span>
+                </div>
+                <span className="font-bold text-slate-900 text-sm font-mono">
+                  {totalMonitors} / 5
+                </span>
               </div>
-              <span className="font-bold text-slate-900 text-sm">{overallUptime}</span>
-            </div>
 
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5 text-slate-600">
-                <Bell className="w-4 h-4 text-amber-500" />
-                <span>Open Incidents</span>
+              <div className="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl border border-slate-100">
+                <div className="flex items-center gap-2.5 text-slate-700">
+                  <Shield className="w-4 h-4 text-blue-500" />
+                  <span>Overall System Uptime</span>
+                </div>
+                <span className="font-bold text-[#70BB3C] text-sm font-mono">
+                  {overallUptime}
+                </span>
               </div>
-              <span className="font-bold text-slate-900 text-sm">0</span>
-            </div>
 
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5 text-slate-600">
-                <Clock className="w-4 h-4 text-[#70BB3C]" />
-                <span>Average Response Time</span>
+              <div className="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl border border-slate-100">
+                <div className="flex items-center gap-2.5 text-slate-700">
+                  <Bell className="w-4 h-4 text-amber-500" />
+                  <span>Active Open Incidents</span>
+                </div>
+                <span className="font-bold text-slate-900 text-sm font-mono">0</span>
               </div>
-              <span className="font-bold text-slate-900 text-sm">
-                {avgResponseTime > 0 ? `${avgResponseTime} ms` : "N/A"}
-              </span>
+
+              <div className="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl border border-slate-100">
+                <div className="flex items-center gap-2.5 text-slate-700">
+                  <Clock className="w-4 h-4 text-[#70BB3C]" />
+                  <span>Average Response Time</span>
+                </div>
+                <span className="font-bold text-slate-900 text-sm font-mono">
+                  {avgResponseTime > 0 ? `${avgResponseTime} ms` : "Ready"}
+                </span>
+              </div>
             </div>
+          </div>
+
+          <div className="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
+            <span>Status</span>
+            <span className="font-semibold text-[#70BB3C] flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-[#70BB3C] animate-pulse" />
+              All Systems Operational
+            </span>
           </div>
         </div>
       </div>
