@@ -1,4 +1,4 @@
-import { getSupabaseClient } from "./supabase";
+import { getSupabaseClient, getSupabaseAdminClient } from "./supabase";
 import { validateUrlForSSRF } from "./ssrf";
 import { checkSingleUrl } from "./checker";
 import type { Monitor, DbCheck, Incident, CheckResult } from "./types";
@@ -24,6 +24,10 @@ export function clearMemoryStore() {
   memoryStore.monitors.clear();
   memoryStore.checks = [];
   memoryStore.incidents = [];
+}
+
+function getClient() {
+  return getSupabaseAdminClient() || getSupabaseClient();
 }
 
 /**
@@ -53,7 +57,7 @@ export async function createMonitor(
 
   const normalizedUrl = ssrf.normalizedUrl || trimmedUrl;
 
-  const client = getSupabaseClient();
+  const client = getClient();
   if (client) {
     // Check 5 monitor quota
     let countQuery = client.from("monitors").select("id", { count: "exact" });
@@ -111,7 +115,7 @@ export async function createMonitor(
  * Lists monitors for a specific user or all monitors.
  */
 export async function listMonitors(userId?: string | null): Promise<Monitor[]> {
-  const client = getSupabaseClient();
+  const client = getClient();
   let rawMonitors: Monitor[] = [];
 
   if (client) {
@@ -193,7 +197,7 @@ export async function updateMonitor(
     };
   }
 
-  const client = getSupabaseClient();
+  const client = getClient();
   if (client) {
     const { data, error } = await client
       .from("monitors")
@@ -222,7 +226,7 @@ export async function updateMonitor(
  * Deletes a monitor.
  */
 export async function deleteMonitor(id: string): Promise<{ success: boolean; error?: string }> {
-  const client = getSupabaseClient();
+  const client = getClient();
   if (client) {
     const { error } = await client.from("monitors").delete().eq("id", id);
     if (error) return { success: false, error: error.message };
@@ -245,7 +249,7 @@ export async function recordCheck(check: DbCheck): Promise<DbCheck> {
     checked_at: check.checked_at || new Date().toISOString(),
   };
 
-  const client = getSupabaseClient();
+  const client = getClient();
   if (client) {
     await client.from("checks").insert(record);
   } else {
@@ -259,7 +263,7 @@ export async function recordCheck(check: DbCheck): Promise<DbCheck> {
  * Retrieves check history for a monitor.
  */
 export async function getChecks(monitorId?: string, limit: number = 30): Promise<DbCheck[]> {
-  const client = getSupabaseClient();
+  const client = getClient();
   if (client) {
     let query = client
       .from("checks")
@@ -286,7 +290,7 @@ export async function getChecks(monitorId?: string, limit: number = 30): Promise
  * Retrieves incidents.
  */
 export async function getIncidents(monitorId?: string, limit: number = 20): Promise<Incident[]> {
-  const client = getSupabaseClient();
+  const client = getClient();
   if (client) {
     let query = client
       .from("incidents")
@@ -317,7 +321,7 @@ export async function processStatusTransition(
   url: string,
   currentResult: CheckResult
 ): Promise<{ incidentAction: "NONE" | "OPENED" | "RESOLVED"; incident?: Incident }> {
-  const client = getSupabaseClient();
+  const client = getClient();
   let openIncident: Incident | null = null;
 
   if (client) {
