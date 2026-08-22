@@ -19,6 +19,7 @@ import {
   Loader2,
   ArrowUpRight,
   UserPlus,
+  Lock,
 } from "lucide-react";
 
 interface MonitorListProps {
@@ -40,6 +41,40 @@ export function MonitorList({
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [historyData, setHistoryData] = useState<Record<string, { checks: DbCheck[]; incidents: Incident[] }>>({});
   const [isRefreshing, setIsRefreshing] = useState<string | null>(null);
+
+  // If user is not logged in, show Auth Gate
+  if (!user) {
+    return (
+      <div className="w-full bg-white rounded-3xl p-8 sm:p-12 border border-slate-200 shadow-sm text-center max-w-2xl mx-auto space-y-5">
+        <div className="w-16 h-16 rounded-2xl bg-[#70BB3C]/10 border border-[#70BB3C]/30 text-[#70BB3C] flex items-center justify-center mx-auto">
+          <Lock className="w-8 h-8" />
+        </div>
+
+        <div>
+          <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
+            Sign In to Access 5-Minute Monitors
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-500 mt-2 max-w-md mx-auto leading-relaxed">
+            Continuous automated uptime monitoring requires an account. Create a free account or sign in to monitor up to 5 websites with 5-minute health checks.
+          </p>
+        </div>
+
+        <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+          {onOpenAuth && (
+            <>
+              <button
+                onClick={onOpenAuth}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 text-xs font-bold text-white bg-[#70BB3C] hover:bg-[#5ea031] rounded-xl transition shadow-sm"
+              >
+                <UserPlus className="w-4 h-4" />
+                <span>Create Free Account / Sign In</span>
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   const toggleExpand = async (id: string) => {
     if (expandedId === id) {
@@ -134,7 +169,7 @@ export function MonitorList({
     return (
       <div className="w-full py-16 flex flex-col items-center justify-center text-slate-400">
         <Loader2 className="w-8 h-8 animate-spin text-[#70BB3C] mb-3" />
-        <span className="text-xs">Loading user monitors...</span>
+        <span className="text-xs">Loading your monitors...</span>
       </div>
     );
   }
@@ -154,23 +189,11 @@ export function MonitorList({
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-0.5">
-            {user
-              ? `Connected to profile (${user.email})`
-              : "Sign in to save and sync your personal 5-minute monitors"}
+            Logged in as: <strong className="text-slate-700">{user.email}</strong>
           </p>
         </div>
 
         <div className="flex items-center gap-3">
-          {!user && onOpenAuth && (
-            <button
-              onClick={onOpenAuth}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition"
-            >
-              <UserPlus className="w-3.5 h-3.5" />
-              <span>Sign In / Register</span>
-            </button>
-          )}
-
           <button
             onClick={onOpenAddModal}
             disabled={monitors.length >= 5}

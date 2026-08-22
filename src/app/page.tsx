@@ -23,9 +23,15 @@ export default function HomePage() {
   const [activeView, setActiveView] = useState<"dashboard" | "regions" | "manage">("dashboard");
 
   const fetchMonitors = useCallback(async () => {
+    if (!user) {
+      setMonitors([]);
+      setIsMonitorsLoading(false);
+      return;
+    }
+
     try {
-      const url = user ? `/api/monitors?userId=${user.id}` : "/api/monitors";
-      const res = await fetch(url);
+      setIsMonitorsLoading(true);
+      const res = await fetch(`/api/monitors?userId=${user.id}`);
       if (res.ok) {
         const data = await res.json();
         setMonitors(data.monitors || []);
@@ -60,7 +66,9 @@ export default function HomePage() {
       }
 
       setLiveResults(data.results);
-      await fetchMonitors();
+      if (user) {
+        await fetchMonitors();
+      }
 
       const resultsEl = document.getElementById("results-anchor");
       if (resultsEl) {
@@ -151,7 +159,7 @@ export default function HomePage() {
                     : "text-slate-600 hover:text-slate-900"
                 }`}
               >
-                5-Min Monitors ({monitors.length}/5)
+                5-Min Monitors {user ? `(${monitors.length}/5)` : ""}
               </button>
             </div>
           </div>
@@ -178,7 +186,13 @@ export default function HomePage() {
                 monitors={monitors}
                 isLoading={isMonitorsLoading}
                 onRefreshMonitors={fetchMonitors}
-                onOpenAddModal={() => setIsAddModalOpen(true)}
+                onOpenAddModal={() => {
+                  if (!user) {
+                    setIsAuthModalOpen(true);
+                  } else {
+                    setIsAddModalOpen(true);
+                  }
+                }}
                 onOpenAuth={() => setIsAuthModalOpen(true)}
               />
             </div>
