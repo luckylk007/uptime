@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState } from "react";
 import type { RegionLatency } from "@/lib/types";
@@ -133,7 +133,7 @@ export function MultiCountryGrid({ regions, url }: MultiCountryGridProps) {
 
                 {/* Total Time in seconds */}
                 <div className="font-mono text-sm font-bold text-slate-800 shrink-0">
-                  {isUp ? `${item.totalTimeSec.toFixed(1)}s` : "FAILED"}
+                  {isUp ? `${item.totalTimeSec.toFixed(2)}s` : "FAILED"}
                 </div>
               </div>
 
