@@ -1,18 +1,22 @@
-﻿import mysql from "mysql2/promise";
+import mysql from "mysql2/promise";
 
 // MySQL connection pool � reads from environment variables
 // Never hardcode credentials here
 const pool = mysql.createPool({
-  host: process.env.MYSQL_HOST || "localhost",
+  host: (process.env.MYSQL_HOST || "localhost").trim(),
   port: Number(process.env.MYSQL_PORT) || 3306,
-  user: process.env.MYSQL_USER || "root",
+  user: (process.env.MYSQL_USER || "root").trim(),
   password: process.env.MYSQL_PASSWORD || "",
-  database: process.env.MYSQL_DATABASE || "uptimepro",
+  database: (process.env.MYSQL_DATABASE || "uptimepro").trim(),
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
+  connectTimeout: 15000,
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 10000,
   timezone: "+00:00",
   charset: "utf8mb4",
+  ssl: process.env.MYSQL_SSL === "true" ? { rejectUnauthorized: false } : undefined,
 });
 
 export default pool;

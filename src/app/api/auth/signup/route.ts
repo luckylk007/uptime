@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { query, queryOne } from "@/lib/mysql";
@@ -66,9 +66,16 @@ export async function POST(req: NextRequest) {
 
     return response;
   } catch (err: any) {
+    console.error("Signup error:", err);
     if (err?.code === "ER_DUP_ENTRY") {
       return NextResponse.json({ error: "An account with this email already exists" }, { status: 409 });
     }
-    return NextResponse.json({ error: "Failed to create account" }, { status: 500 });
+    if (err?.code === "ETIMEDOUT" || err?.code === "ECONNREFUSED" || err?.code === "ER_ACCESS_DENIED_ERROR") {
+      return NextResponse.json(
+        { error: `Database Error (${err.code}): Please verify Hostinger Remote MySQL is enabled and credentials are correct.` },
+        { status: 503 }
+      );
+    }
+    return NextResponse.json({ error: err?.message || "Failed to create account" }, { status: 500 });
   }
 }
