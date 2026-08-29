@@ -1,63 +1,59 @@
-import { NextRequest, NextResponse } from "next/server";
-import { updateMonitor, deleteMonitor, listMonitors } from "@/lib/db";
+﻿import { NextRequest, NextResponse } from "next/server";
+import { getMonitorById, updateMonitor, deleteMonitor } from "@/lib/db-mysql";
+import { getAuthUser } from "@/lib/auth-middleware";
+import { z } from "zod";
 
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+const UpdateSchema = z.object({
+  enabled: z.boolean().optional(),
+  interval_minutes: z.number().int().optional(),
+});
+
+type Params = { params: Promise<{ id: string }> };
+
+export async function GET(req: NextRequest, { params }: Params) {
+  const authUser = getAuthUser(req);
+  if (!authUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   const { id } = await params;
-  const monitors = await listMonitors();
-  const monitor = monitors.find((m) => m.id === id);
+  const monitor = await getMonitorById(id, authUser.userId);
+  if (!monitor) return NextResponse.json({ error: "Monitor not found" }, { status: 404 });
 
-  if (!monitor) {
-    return NextResponse.json({ error: "Monitor not found" }, { status: 404 });
-  }
-
-  return NextResponse.json({ monitor }, { status: 200 });
+  return NextResponse.json({ monitor });
 }
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params;
-    const body = await req.json().catch(() => null);
-    if (!body || typeof body !== "object") {
-      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
-    }
+export async function PATCH(req: NextRequest, { params }: Params) {
+  const authUser = getAuthUser(req);
+  if (!authUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const updates: { enabled?: boolean; interval_minutes?: number } = {};
-    if (typeof body.enabled === "boolean") {
-      updates.enabled = body.enabled;
-    }
-    if (body.interval_minutes !== undefined) {
-      updates.interval_minutes = Number(body.interval_minutes);
-    }
+  const { id } = await params;
 
-    const result = await updateMonitor(id, updates);
-    if (result.error) {
-      return NextResponse.json({ error: result.error }, { status: 400 });
-    }
-
-    return NextResponse.json({ monitor: result.monitor }, { status: 200 });
-  } catch {
-    return NextResponse.json({ error: "Failed to update monitor" }, { status: 500 });
+  const body = await req.json().catch(() => null);
+  const parsed = UpdateSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.errors[0]?.message }, { status: 400 });
   }
+
+  const result = await updateMonitor(id, authUser.userId, parsed.data);
+  if (result.error) {
+    return NextResponse.json(
+      { error: result.error },
+      { status: result.error.includes("not found") ? 404 : 400 }
+    );
+  }
+
+  return NextResponse.json({ monitor: result.monitor });
 }
 
-export async function DELETE(
-  _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params;
-    const result = await deleteMonitor(id);
-    if (!result.success) {
-      return NextResponse.json({ error: result.error || "Monitor not found" }, { status: 404 });
-    }
-    return NextResponse.json({ success: true }, { status: 200 });
-  } catch {
-    return NextResponse.json({ error: "Failed to delete monitor" }, { status: 500 });
+export async function DELETE(req: NextRequest, { params }: Params) {
+  const authUser = getAuthUser(req);
+  if (!authUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { id } = await params;
+
+  const result = await deleteMonitor(id, authUser.userId);
+  if (!result.success) {
+    return NextResponse.json({ error: result.error }, { status: 404 });
   }
+
+  return NextResponse.json({ success: true });
 }

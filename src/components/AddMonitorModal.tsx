@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState } from "react";
 import { useAuth } from "@/lib/auth-context";
@@ -41,10 +41,11 @@ export function AddMonitorModal({ isOpen, onClose, onMonitorAdded, onOpenAuth }:
       const res = await fetch("/api/monitors", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           url: trimmed,
           interval_minutes: interval,
-          userId: user?.id || null,
+          // NOTE: userId intentionally NOT sent — server reads it from JWT cookie
         }),
       });
 

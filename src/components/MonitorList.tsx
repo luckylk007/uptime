@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState } from "react";
 import type { Monitor, DbCheck, Incident } from "@/lib/types";
@@ -85,7 +85,7 @@ export function MonitorList({
     setExpandedId(id);
     if (!historyData[id]) {
       try {
-        const res = await fetch(`/api/monitors/${id}/history?limit=30`);
+        const res = await fetch(`/api/monitors/${id}/history?limit=30`, { credentials: "include" });
         if (res.ok) {
           const data = await res.json();
           setHistoryData((prev) => ({
@@ -105,6 +105,7 @@ export function MonitorList({
       const res = await fetch(`/api/monitors/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ enabled: !currentStatus }),
       });
 
@@ -123,6 +124,7 @@ export function MonitorList({
     try {
       const res = await fetch(`/api/monitors/${id}`, {
         method: "DELETE",
+        credentials: "include",
       });
 
       if (res.ok) {
@@ -148,7 +150,7 @@ export function MonitorList({
       if (res.ok) {
         await onRefreshMonitors();
         if (expandedId === monitor.id) {
-          const histRes = await fetch(`/api/monitors/${monitor.id}/history?limit=30`);
+          const histRes = await fetch(`/api/monitors/${monitor.id}/history?limit=30`, { credentials: "include" });
           if (histRes.ok) {
             const data = await histRes.json();
             setHistoryData((prev) => ({

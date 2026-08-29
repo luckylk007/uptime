@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useEffect, useCallback } from "react";
 import { HeroSection } from "@/components/HeroSection";
@@ -31,7 +31,7 @@ export default function HomePage() {
 
     try {
       setIsMonitorsLoading(true);
-      const res = await fetch(`/api/monitors?userId=${user.id}`);
+      const res = await fetch("/api/monitors", { credentials: "include" });
       if (res.ok) {
         const data = await res.json();
         setMonitors(data.monitors || []);

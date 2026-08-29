@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
-import { processBatchMonitors } from "@/lib/db";
+﻿import { NextRequest, NextResponse } from "next/server";
+import { processBatchMonitors } from "@/lib/db-mysql";
 
 export async function POST(req: NextRequest) {
   try {
-    // Basic Cron secret authorization check if configured
+    // CRON_SECRET authorization � must match env var
     const authHeader = req.headers.get("authorization");
     const cronSecret = process.env.CRON_SECRET;
     if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
@@ -11,20 +11,16 @@ export async function POST(req: NextRequest) {
     }
 
     const { searchParams } = new URL(req.url);
-    const limit = Number.parseInt(searchParams.get("limit") || "10", 10);
-    const safeLimit = Math.min(Math.max(1, limit), 25);
+    const limit = Math.min(Math.max(1, Number(searchParams.get("limit") || "10")), 25);
 
-    const result = await processBatchMonitors(safeLimit);
+    const result = await processBatchMonitors(limit);
     return NextResponse.json({
       success: true,
       timestamp: new Date().toISOString(),
       ...result,
     }, { status: 200 });
   } catch {
-    return NextResponse.json(
-      { error: "Cron processing failed" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Cron processing failed" }, { status: 500 });
   }
 }
 

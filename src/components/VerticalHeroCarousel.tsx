@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useEffect } from "react";
 import {
@@ -100,18 +100,23 @@ export function VerticalHeroCarousel() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isMounted, setIsMounted] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
-  // Premium Slow Shuffle (Rotates every 6 seconds, pauses on hover)
+  // Butter-smooth automatic interval with gentle cross-fade timing
   useEffect(() => {
     if (!isMounted || isPaused) return;
 
     const timer = setInterval(() => {
-      setActiveIndex((prev) => (prev + 1) % CAROUSEL_ITEMS.length);
-    }, 6000);
+      setIsTransitioning(true);
+      setTimeout(() => {
+        setActiveIndex((prev) => (prev + 1) % CAROUSEL_ITEMS.length);
+        setIsTransitioning(false);
+      }, 350);
+    }, 6500);
 
     return () => clearInterval(timer);
   }, [isMounted, isPaused]);
@@ -122,7 +127,7 @@ export function VerticalHeroCarousel() {
   const centerIdx = activeIndex;
   const bottomIdx = (activeIndex + 1) % total;
 
-  const cards = [
+  const slots = [
     { item: CAROUSEL_ITEMS[topIdx], position: "top", originalIdx: topIdx },
     { item: CAROUSEL_ITEMS[centerIdx], position: "center", originalIdx: centerIdx },
     { item: CAROUSEL_ITEMS[bottomIdx], position: "bottom", originalIdx: bottomIdx },
@@ -133,36 +138,49 @@ export function VerticalHeroCarousel() {
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
       className="w-full max-w-lg mx-auto select-none relative"
+      style={{ perspective: "1000px" }}
     >
-      {/* 3D Perspective Card Shuffle Stack */}
-      <div className="space-y-4 relative py-2">
-        {cards.map(({ item, position, originalIdx }) => {
+      {/* Ambient background glow for active center card */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3/4 h-32 bg-[#70BB3C]/10 rounded-full blur-3xl pointer-events-none -z-10" />
+
+      {/* Cards Stack with GPU-accelerated smooth rendering */}
+      <div className="flex flex-col gap-3.5 relative py-2">
+        {slots.map(({ item, position, originalIdx }, slotIdx) => {
           const isCenter = position === "center";
           const isTop = position === "top";
-          const isBottom = position === "bottom";
           const Icon = item.icon;
 
           return (
             <div
-              key={`${position}-${originalIdx}`}
-              onClick={() => setActiveIndex(originalIdx)}
-              style={{
-                transitionTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
+              key={slotIdx}
+              onClick={() => {
+                setIsTransitioning(true);
+                setTimeout(() => {
+                  setActiveIndex(originalIdx);
+                  setIsTransitioning(false);
+                }, 200);
               }}
-              className={`p-5 sm:p-6 rounded-2xl transition-all duration-1000 cursor-pointer relative overflow-hidden flex items-start gap-4 ${
-                isCenter
-                  ? "bg-gradient-to-r from-[#0e1c33] via-[#122340] to-[#0e1c33] border-2 border-[#70BB3C] shadow-[0_20px_50px_rgba(112,187,60,0.16)] scale-100 opacity-100 translate-y-0 z-30 ring-1 ring-[#70BB3C]/30"
+              style={{
+                willChange: "transform, opacity, filter",
+                transition: "all 1200ms cubic-bezier(0.16, 1, 0.3, 1)",
+                transform: isCenter
+                  ? "translate3d(0, 0, 0) scale(1)"
                   : isTop
-                  ? "bg-[#091220]/70 border border-slate-800/80 scale-[0.93] opacity-35 hover:opacity-60 blur-[0.6px] translate-y-1.5 z-10"
-                  : "bg-[#091220]/70 border border-slate-800/80 scale-[0.93] opacity-35 hover:opacity-60 blur-[0.6px] -translate-y-1.5 z-10"
+                  ? "translate3d(0, 6px, 0) scale(0.94)"
+                  : "translate3d(0, -6px, 0) scale(0.94)",
+              }}
+              className={`p-5 sm:p-6 rounded-2xl cursor-pointer relative overflow-hidden flex items-start gap-4 ${
+                isCenter
+                  ? "bg-gradient-to-r from-[#0d1a31]/95 via-[#112340]/95 to-[#0e1c34]/95 border-2 border-[#70BB3C] shadow-[0_20px_60px_rgba(112,187,60,0.18)] opacity-100 z-30 ring-1 ring-[#70BB3C]/30"
+                  : "bg-[#091220]/75 border border-slate-800/80 opacity-35 hover:opacity-65 blur-[0.4px] z-10"
               }`}
             >
-              {/* Glowing Icon Box */}
+              {/* Icon Box */}
               <div
                 style={{
-                  transitionTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
+                  transition: "all 1000ms cubic-bezier(0.16, 1, 0.3, 1)",
                 }}
-                className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center shrink-0 border transition-all duration-1000 ${
+                className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center shrink-0 border ${
                   isCenter
                     ? "bg-[#70BB3C]/15 border-[#70BB3C]/50 text-[#70BB3C] shadow-inner shadow-[#70BB3C]/30 scale-105"
                     : "bg-slate-900/80 border-slate-800 text-slate-500 scale-95"
@@ -171,22 +189,23 @@ export function VerticalHeroCarousel() {
                 <Icon className="w-6 h-6 sm:w-7 sm:h-7 stroke-[2.2]" />
               </div>
 
-              {/* Text Content */}
+              {/* Text Content with Cross-Fade Opacity */}
               <div
                 style={{
-                  transitionTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
+                  transition: "opacity 400ms ease-in-out",
+                  opacity: isTransitioning ? 0.3 : 1,
                 }}
-                className="flex-1 min-w-0 pr-8 transition-all duration-1000"
+                className="flex-1 min-w-0 pr-8"
               >
                 <div
-                  className={`text-[10px] font-mono font-bold tracking-wider uppercase mb-1 transition-colors duration-1000 ${
+                  className={`text-[10px] font-mono font-bold tracking-wider uppercase mb-1 transition-colors duration-700 ${
                     isCenter ? "text-[#70BB3C]" : "text-slate-500"
                   }`}
                 >
                   {item.tag}
                 </div>
 
-                <h3 className="text-base sm:text-lg font-black tracking-tight leading-tight transition-all duration-1000">
+                <h3 className="text-base sm:text-lg font-black tracking-tight leading-tight transition-colors duration-700">
                   <span className="text-white">{item.title1} </span>
                   <span className={isCenter ? "text-[#70BB3C]" : "text-slate-400"}>
                     {item.title2}
@@ -194,7 +213,7 @@ export function VerticalHeroCarousel() {
                 </h3>
 
                 <p
-                  className={`text-xs mt-1.5 leading-relaxed line-clamp-2 transition-colors duration-1000 ${
+                  className={`text-xs mt-1.5 leading-relaxed line-clamp-2 transition-colors duration-700 ${
                     isCenter ? "text-slate-300" : "text-slate-500"
                   }`}
                 >
@@ -206,9 +225,9 @@ export function VerticalHeroCarousel() {
               <div className="absolute right-4 top-1/2 -translate-y-1/2">
                 <div
                   style={{
-                    transitionTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
+                    transition: "all 1000ms cubic-bezier(0.16, 1, 0.3, 1)",
                   }}
-                  className={`w-8 h-8 rounded-full flex items-center justify-center border transition-all duration-1000 ${
+                  className={`w-8 h-8 rounded-full flex items-center justify-center border ${
                     isCenter
                       ? "bg-[#70BB3C] text-slate-950 shadow-md shadow-[#70BB3C]/30 scale-105"
                       : "bg-slate-900/80 border-slate-800 text-slate-600 scale-90"

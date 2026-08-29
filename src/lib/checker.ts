@@ -1,4 +1,4 @@
-import { validateUrlForSSRF } from "./ssrf";
+﻿import { validateUrlForSSRF } from "./ssrf";
 import type { CheckResult, UptimeStatus, RegionLatency, CheckTimingBreakdown } from "./types";
 import dns from "node:dns/promises";
 

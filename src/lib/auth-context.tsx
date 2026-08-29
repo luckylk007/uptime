@@ -1,15 +1,19 @@
-"use client";
+﻿"use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { getSupabaseClient } from "./supabase";
-import type { User, Session } from "@supabase/supabase-js";
+
+// -- Types ---------------------------------------------------------------------
+export interface AuthUser {
+  id: string;
+  email: string;
+}
 
 interface AuthContextType {
-  user: User | null;
-  session: Session | null;
+  user: AuthUser | null;
+  session: { user: AuthUser } | null; // kept for backwards-compat with existing components
   loading: boolean;
   signIn: (email: string, pass: string) => Promise<{ error?: string }>;
-  signUp: (email: string, pass: string) => Promise<{ error?: string; user?: any }>;
+  signUp: (email: string, pass: string) => Promise<{ error?: string; user?: AuthUser }>;
   signOut: () => Promise<void>;
 }
 
@@ -22,137 +26,82 @@ const AuthContext = createContext<AuthContextType>({
   signOut: async () => {},
 });
 
+// -- Provider ------------------------------------------------------------------
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
+  // On mount: verify session by calling /api/auth/me
+  // The JWT token lives in an httpOnly cookie � no localStorage access needed
   useEffect(() => {
-    try {
-      const supabase = getSupabaseClient();
-      if (!supabase) {
-        if (typeof window !== "undefined") {
-          const savedUser = localStorage.getItem("pulsecheck_demo_user");
-          if (savedUser) {
-            try {
-              setUser(JSON.parse(savedUser));
-            } catch {
-              // ignore
-            }
-          }
+    fetch("/api/auth/me", { credentials: "include" })
+      .then(async (res) => {
+        if (res.ok) {
+          const data = await res.json();
+          setUser(data.user ?? null);
+        } else {
+          setUser(null);
         }
-        setLoading(false);
-        return;
-      }
-
-      // 1. Get initial session
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
-      }).catch(() => {
-        setLoading(false);
-      });
-
-      // 2. Listen to auth changes
-      const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
-      });
-
-      return () => {
-        subscription.unsubscribe();
-      };
-    } catch {
-      setLoading(false);
-    }
+      })
+      .catch(() => setUser(null))
+      .finally(() => setLoading(false));
   }, []);
 
-  const signIn = async (email: string, pass: string) => {
+  const signIn = async (email: string, pass: string): Promise<{ error?: string }> => {
     try {
-      const supabase = getSupabaseClient();
-      if (!supabase) {
-        const demoUser: any = {
-          id: "demo-user-123",
-          email,
-          created_at: new Date().toISOString(),
-        };
-        setUser(demoUser);
-        if (typeof window !== "undefined") {
-          localStorage.setItem("pulsecheck_demo_user", JSON.stringify(demoUser));
-        }
-        return {};
-      }
-
-      const { error, data } = await supabase.auth.signInWithPassword({
-        email,
-        password: pass,
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include", // sends/receives httpOnly cookie
+        body: JSON.stringify({ email, password: pass }),
       });
 
-      if (error) return { error: error.message };
+      const data = await res.json();
+      if (!res.ok) return { error: data.error || "Failed to sign in" };
+
       setUser(data.user);
-      setSession(data.session);
       return {};
     } catch (err: any) {
       return { error: err?.message || "Failed to sign in" };
     }
   };
 
-  const signUp = async (email: string, pass: string) => {
+  const signUp = async (email: string, pass: string): Promise<{ error?: string; user?: AuthUser }> => {
     try {
-      const supabase = getSupabaseClient();
-      if (!supabase) {
-        const demoUser: any = {
-          id: "demo-user-123",
-          email,
-          created_at: new Date().toISOString(),
-        };
-        setUser(demoUser);
-        if (typeof window !== "undefined") {
-          localStorage.setItem("pulsecheck_demo_user", JSON.stringify(demoUser));
-        }
-        return { user: demoUser };
-      }
-
-      const { error, data } = await supabase.auth.signUp({
-        email,
-        password: pass,
+      const res = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ email, password: pass }),
       });
 
-      if (error) return { error: error.message };
-      if (data.user) {
-        setUser(data.user);
-        setSession(data.session);
-      }
+      const data = await res.json();
+      if (!res.ok) return { error: data.error || "Failed to create account" };
+
+      setUser(data.user);
       return { user: data.user };
     } catch (err: any) {
-      return { error: err?.message || "Failed to sign up" };
+      return { error: err?.message || "Failed to create account" };
     }
   };
 
-  const signOut = async () => {
+  const signOut = async (): Promise<void> => {
     try {
-      const supabase = getSupabaseClient();
-      if (supabase) {
-        await supabase.auth.signOut();
-      }
-      if (typeof window !== "undefined") {
-        localStorage.removeItem("pulsecheck_demo_user");
-      }
-      setUser(null);
-      setSession(null);
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
     } catch {
-      setUser(null);
-      setSession(null);
+      // ignore network errors � still clear local state
     }
+    setUser(null);
   };
 
   return (
     <AuthContext.Provider
       value={{
         user,
-        session,
+        session: user ? { user } : null,
         loading,
         signIn,
         signUp,

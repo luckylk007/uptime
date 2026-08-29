@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState } from "react";
 import type { CheckResult, Monitor } from "@/lib/types";

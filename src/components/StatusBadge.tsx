@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 import { CheckCircle2, XCircle, Clock, AlertTriangle } from "lucide-react";
 import type { UptimeStatus } from "@/lib/types";
 

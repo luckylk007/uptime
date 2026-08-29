@@ -1,4 +1,4 @@
-export type UptimeStatus = "UP" | "DOWN" | "TIMEOUT" | "ERROR";
+﻿export type UptimeStatus = "UP" | "DOWN" | "TIMEOUT" | "ERROR";
 
 export interface RegionLatency {
   cityName: string;

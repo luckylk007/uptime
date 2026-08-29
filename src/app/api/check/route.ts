@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import { checkMultipleUrls } from "@/lib/checker";
 import type { CheckResponse } from "@/lib/types";
 

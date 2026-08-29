@@ -1,25 +1,26 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getChecks, getIncidents } from "@/lib/db";
+﻿import { NextRequest, NextResponse } from "next/server";
+import { getMonitorById, getChecks, getIncidents } from "@/lib/db-mysql";
+import { getAuthUser } from "@/lib/auth-middleware";
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params;
-    const url = new URL(req.url);
-    const limit = Number.parseInt(url.searchParams.get("limit") || "50", 10);
+type Params = { params: Promise<{ id: string }> };
 
-    const [checks, incidents] = await Promise.all([
-      getChecks(id, limit),
-      getIncidents(id, 20),
-    ]);
+export async function GET(req: NextRequest, { params }: Params) {
+  const authUser = getAuthUser(req);
+  if (!authUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    return NextResponse.json({ checks, incidents }, { status: 200 });
-  } catch {
-    return NextResponse.json(
-      { error: "Failed to fetch monitor history" },
-      { status: 500 }
-    );
-  }
+  const { id } = await params;
+
+  // Verify the monitor belongs to this user before returning its history
+  const monitor = await getMonitorById(id, authUser.userId);
+  if (!monitor) return NextResponse.json({ error: "Monitor not found" }, { status: 404 });
+
+  const { searchParams } = new URL(req.url);
+  const limit = Math.min(Math.max(1, Number(searchParams.get("limit") || 50)), 200);
+
+  const [checks, incidents] = await Promise.all([
+    getChecks(id, limit),
+    getIncidents(id, 20),
+  ]);
+
+  return NextResponse.json({ checks, incidents });
 }

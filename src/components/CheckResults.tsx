@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 import { CheckResult } from "@/lib/types";
 import { StatusBadge } from "./StatusBadge";
 import { Clock, ArrowUpRight, AlertCircle, CheckCircle2, XCircle, Activity } from "lucide-react";

@@ -6,12 +6,24 @@ import { POST as cronPost } from "../../src/app/api/cron/process-monitors/route"
 import { NextRequest } from "next/server";
 import { clearMemoryStore } from "../../src/lib/db";
 import * as ssrfModule from "../../src/lib/ssrf";
+import { signToken } from "../../src/lib/jwt";
+
+// Set JWT_SECRET for tests
+process.env.JWT_SECRET = "test-secret-for-e2e-tests-at-least-32-chars-long";
+
+const TEST_USER_ID = "test-user";
+const TEST_USER_EMAIL = "test@example.com";
 
 describe("Phase 3 Final Production End-to-End System Test", () => {
   beforeEach(() => {
     clearMemoryStore();
     vi.restoreAllMocks();
   });
+
+  function getAuthCookie(): string {
+    const token = signToken({ userId: TEST_USER_ID, email: TEST_USER_EMAIL });
+    return `uptimepro_token=${token}`;
+  }
 
   function createRequest(url: string, method: string, body?: any, headers: Record<string, string> = {}) {
     return new NextRequest(url, {
@@ -23,6 +35,18 @@ describe("Phase 3 Final Production End-to-End System Test", () => {
       body: body ? JSON.stringify(body) : undefined,
     });
   }
+
+  function createAuthRequest(url: string, method: string, body?: any) {
+    return new NextRequest(url, {
+      method,
+      headers: {
+        "content-type": "application/json",
+        cookie: getAuthCookie(),
+      },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+  }
+
 
   it("1. Single URL Check flow (1 URL)", async () => {
     vi.spyOn(ssrfModule, "validateUrlForSSRF").mockResolvedValue({
@@ -229,8 +253,8 @@ describe("Phase 3 Final Production End-to-End System Test", () => {
       normalizedUrl: "https://e2e-monitored.com/",
     });
 
-    // Step A: Create Monitor
-    const createReq = createRequest("http://localhost:3000/api/monitors", "POST", {
+    // Step A: Create Monitor (authenticated)
+    const createReq = createAuthRequest("http://localhost:3000/api/monitors", "POST", {
       url: "https://e2e-monitored.com",
       interval_minutes: 5,
     });
@@ -251,16 +275,16 @@ describe("Phase 3 Final Production End-to-End System Test", () => {
     const cronData = await cronRes.json();
     expect(cronData.processed).toBe(1);
 
-    // Step C: Retrieve Monitor History
-    const historyReq = createRequest(`http://localhost:3000/api/monitors/${monitorId}/history`, "GET");
+    // Step C: Retrieve Monitor History (authenticated)
+    const historyReq = createAuthRequest(`http://localhost:3000/api/monitors/${monitorId}/history`, "GET");
     const historyRes = await monitorHistoryGet(historyReq, { params: Promise.resolve({ id: monitorId }) });
     expect(historyRes.status).toBe(200);
     const historyData = await historyRes.json();
     expect(historyData.checks).toHaveLength(1);
     expect(historyData.checks[0].status).toBe("UP");
 
-    // Step D: Verify Monitor in List
-    const listReq = createRequest("http://localhost:3000/api/monitors", "GET");
+    // Step D: Verify Monitor in List (authenticated)
+    const listReq = createAuthRequest("http://localhost:3000/api/monitors", "GET");
     const listRes = await monitorsGet(listReq);
     const listData = await listRes.json();
     expect(listData.monitors).toHaveLength(1);
